@@ -41,3 +41,14 @@ def field_element_to_byte_array(element):
         if coeff[i] == 1:
             result[i // 8] |= (1 << ((7 - i) % 8))
     return bytes(result)
+
+def byte_array_to_bitvector(a):
+    result = []
+    for i in range(len(a)):
+        for j in range(8):
+            result.append(a[i] >> j & 0x1)
+    return result
+
+def xor_block(block_a, block_b):
+    assert(len(block_a) == len(block_b))
+    return bytes([a ^^ b for a, b in zip(block_a, block_b)])
