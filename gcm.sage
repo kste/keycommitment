@@ -34,10 +34,10 @@ correction_indices = [0, 4]
 assert(len(correction_indices) == 2)
 
 # Derive some of the constants we need to compute the tag.
-H1 = byte_array_to_field_element(BlockAES(zero_block, key1))
-H2 = byte_array_to_field_element(BlockAES(zero_block, key2))
-tag_mask1 = byte_array_to_field_element(BlockAES(nonce + unhexlify('00000001'), key1))
-tag_mask2 = byte_array_to_field_element(BlockAES(nonce + unhexlify('00000001'), key2))
+H1 = byte_array_to_field_element(block_aes(zero_block, key1))
+H2 = byte_array_to_field_element(block_aes(zero_block, key2))
+tag_mask1 = byte_array_to_field_element(block_aes(nonce + unhexlify('00000001'), key1))
+tag_mask2 = byte_array_to_field_element(block_aes(nonce + unhexlify('00000001'), key2))
 len_block = byte_array_to_field_element(unhexlify(hex(num_ad_blocks*128)[2:].zfill(16)) + unhexlify(hex(num_ct_blocks*128)[2:].zfill(16)))
 
 # Convert additional data, ciphertext blocks and target tag value to field elements.

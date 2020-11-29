@@ -1,15 +1,24 @@
 from Crypto.Cipher import AES
 from binascii import hexlify, unhexlify
 
-zero_block = unhexlify("00"*16)
+zero_block = unhexlify('00'*16)
+one_block = unhexlify('11'*16)
 
-def BlockAES(block, key):
+def block_aes(block, key):
     """
     Encrypt a 16-byte block using AES with the given key.
     """
     assert(len(block) == 16)
-    aes = AES.new(key, AES.MODE_CBC, iv=unhexlify("00000000000000000000000000000000"))
+    aes = AES.new(key, AES.MODE_CBC, iv=zero_block)
     return aes.encrypt(block)
+
+def block_aes_inverse(block, key):
+    """
+    Decrypt a 16-byte block using AES with the given key.
+    """
+    assert(len(block) == 16)
+    aes = AES.new(key, AES.MODE_CBC, iv=zero_block)
+    return aes.decrypt(block)
 
 def byte_array_to_field_element(block):
     """
