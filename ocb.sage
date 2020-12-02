@@ -1,4 +1,5 @@
 from Crypto.Cipher import AES
+from functools import reduce
 
 load('util.sage')
 F2.<x> = GF(2)[];
@@ -68,17 +69,25 @@ tag = unhexlify('04'*16)
 
 # Fix the message length so we can compute all the mask values needed in advance.
 # For the attack we need to control t + 1 message blocks. For the sample attack
-# we will only used a single message block here and assume that the blocks used
-# for correction are in the end. There is no restriction for this, but it allows
-# to keep
+# we assume that the blocks containing the actual message content are in the beginning
+# while the blocks used for forcing a correct tag are in the end. There is no restriction
+# for this, but it allows to keep the implementation here simpler.
 #
 # t should be ~256 to have a good probability of finding a solution.
+content_length = 6
 t = 256
-m = t + 2
+m = content_length + t + 1
 
 # Set the value of the two messages. Note that most of these values will be overwritten.
 m1 = [b'\xaa'*16 for _ in range(m)]
 m2 = [b'\xbb'*16 for _ in range(m)]
+
+# In order to get the correct ciphertext, we will always need to control
+# either the block in m1 or m2. The following indices determine which
+# blocks of plaintext are preserved either in m1 or m2.
+controlled_m1 = [0, 1, 2]
+controlled_m2 = [3, 4, 5]
+assert(len(controlled_m1 + controlled_m2) == content_length)
 
 # Generate all the masks
 L1_dollar, offset1 = derive_initial_L_and_offset(key1, nonce)
@@ -100,20 +109,22 @@ offsets2 = offsets2[1:]
 T1 = xor_block(xor_block(block_aes_inverse(tag, key1), L1_dollar), offsets1[-1])
 T2 = xor_block(xor_block(block_aes_inverse(tag, key2), L2_dollar), offsets2[-1])
 
+
+# We have to fix the uncontrolled blocks in m1/m2 so they encrypt to the same ciphertext as m1/m2.
+for idx in controlled_m1:
+    m2[idx] = block_encrypt_decrypt(m1[idx], key1, key2, offsets1[idx], offsets2[idx])
+for idx in controlled_m2:
+    m1[idx] = block_encrypt_decrypt(m2[idx], key2, key1, offsets2[idx], offsets1[idx])
+
 # Modify m1 in order to get the correct tag value. This guarantees that as long
 # as the checksum is 0 for m1[m - t] ... m1[m] the tag will be correct.
-for i in range(m - t, m):
-    m1[i] = zero_block
-m1[m - t - 1] = xor_block(T1, m1[0])
-
-# We have to fix the blocks in m2 so they encrypt to the same ciphertext as m1.
-m2[0] = block_encrypt_decrypt(m1[0], key1, key2, offsets1[0], offsets2[0])
+m1[m - t - 1] = reduce(lambda x, y: xor_block(x, y), m1[:(m - t - 1)] + [T1])
 m2[m - t - 1] = block_encrypt_decrypt(m1[m - t - 1], key1, key2,
                                       offsets1[m - t - 1],
                                       offsets2[m - t - 1])
 
 # Update target checksum for the free blocks after fixing the first blocks of m2.
-T2 = xor_block(xor_block(T2, m2[0]), m2[m - t - 1])
+T2 = reduce(lambda x, y: xor_block(x, y), m2[:(m - t)] + [T2])
 
 # Generate the gamma values
 m2_blocks_zero = []
@@ -178,8 +189,8 @@ b = vector(GF(2), byte_array_to_bitvector(T2) + [1]*(t//2))
 try:
     solution = A.solve_right(b)
 except ValueError:
-    print("Could not find a solution for the system of linear equations. "
-          "You can try increasing the value t or a different combination of keys/nonce.")
+    print('Could not find a solution for the system of linear equations. '
+          'You can try increasing the value t or a different combination of keys/nonce.')
     exit(1)
 
 # Set the final message depending on the solution to the system of
