@@ -120,7 +120,7 @@ def siv(key1, key2, nonce, tag, num_blocks,
     return ciphertext1, tag1
 
 
-if __name__ == "__main__":
+if __name__ == "__main__" and __file__ == "gcm_siv.sage.py":
 # Construct a ciphertext which is valid for two keys
     key1 = unhexlify('01'*16)
     key2 = unhexlify('02'*16)

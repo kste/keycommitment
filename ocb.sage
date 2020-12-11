@@ -195,7 +195,7 @@ def ocb(key1, key2, nonce, tag,
     return ct1, tag1
 
 
-if __name__ == "__main__":
+if __name__ == "__main__" and __file__ == "ocb.sage.py":
 # Construct ciphertext which works for two keys
     key1 = unhexlify('01'*16)
     key2 = unhexlify('02'*16)
