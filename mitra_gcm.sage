@@ -28,7 +28,7 @@ parser.add_argument('-k', '--keys', nargs=2, default=[unhexlify('01'*16), unhexl
     help="Encryption keys - default: 01*16 / 02*16 .")
 parser.add_argument('-n', '--nonce', default=unhexlify('03'*12),
     help="Nonce - default: 03*12 .")
-parser.add_argument('-a', '--additional_data', default=unhexlify(b'\xaa'*32),
+parser.add_argument('-a', '--additional_data', default=unhexlify(b'aa'*32),
     help="Additional Data - default: AA*32 .")
 parser.add_argument('-t', '--tag', default=unhexlify('04'*16),
     help="Tag - default: 04*16 .")
@@ -50,6 +50,7 @@ index = int(args.index)
 cuts = fn[fn.find("(") + 1:]
 cuts = cuts[:cuts.find(")")]
 cuts = cuts.split("-")
+cuts = [int(i, 16) for i in cuts]
 
 if len(cuts) < 1:
     printf("Invalid cuts parameters from filename - aborting.")
@@ -68,26 +69,25 @@ c2, _ = cipher.encrypt_and_digest(fdata)
 
 ciphertext = mix(c1, c2, cuts)
 
-
 num_ad_blocks = len(additional_data) // 16
 ad_blocks = [additional_data[i*16: i*16+16] for i in range(num_ad_blocks)]
 
 # if index is null, then we append 2 blocks and use them for correction
 if index == 0:
-    ciphertext += b"\0" * (16 - len(ciphertext) % 16)
-    index = len(ciphertext)
+    if len(ciphertext) % 16 > 0:
+        ciphertext += b"\0" * (16 - len(ciphertext) % 16)
+    index = len(ciphertext) // 16
     ciphertext += b"\0" * 32
-else:
+
 # In practice, we can put these 2 blocks anywhere - even in AD -
-# but it's not supported here.    
-    correction_indices = [
-        num_ad_blocks + index,
-        num_ad_blocks + index + 1
-    ]
+# but it's not supported in this script.    
+correction_indices = [
+    num_ad_blocks + index,
+    num_ad_blocks + index + 1
+]
 
 num_ct_blocks = len(ciphertext) // 16
 ct_blocks = [ciphertext[i*16: i*16+16] for i in range(num_ct_blocks)]
-
 
 ad_blocks, ct_blocks = gcm(key1, key2, nonce, tag,
     correction_indices,
