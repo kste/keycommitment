@@ -19,10 +19,10 @@ parser.add_argument('-i', '--index', default=0,
 args = parser.parse_args()
 
 fn = args.gcm_file
-tag = args.tag
+wanted_tag = args.tag
 index = int(args.index)
 
-with open(fname, "rb") as f:
+with open(fn, "rb") as f:
     lines = f.readlines()
 
 for line in lines:
@@ -35,6 +35,9 @@ for v in ["key1", "key2", "adata", "nonce", "ciphertext", "tag"]:
 
 assert len(ciphertext) % 16 == 0
 assert len(adata) % 16 == 0
+
+# we just discard the previous value
+tag = wanted_tag
 
 ad_str = adata
 num_ad_blocks = len(ad_str) // 16
@@ -69,12 +72,10 @@ print(f'Tag: {hexlify(tag)}')
 if args.dump_plaintexts:
     cipher = AES.new(key1, AES.MODE_GCM, nonce=nonce)
     _ = cipher.update(additional_data)
-    plaintext = cipher.decrypt_and_verify(ciphertext, tag)
+    m1 = cipher.decrypt_and_verify(ciphertext, tag)
 
     cipher = AES.new(key2, AES.MODE_GCM, nonce=nonce)
     _ = cipher.update(additional_data)
-    plaintext = cipher.decrypt_and_verify(ciphertext, tag)
-    m1 = AES_GCM_SIV_decrypt(ciphertext, tag, key1, nonce)
-    m2 = AES_GCM_SIV_decrypt(ciphertext, tag, key2, nonce)
+    m2 = cipher.decrypt_and_verify(ciphertext, tag)
     with open("gcm1.bin", "wb") as f: f.write(m1)
     with open("gcm2.bin", "wb") as f: f.write(m2)
