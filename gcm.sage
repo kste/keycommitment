@@ -7,11 +7,12 @@ F2.<x> = GF(2)[];
 p = x^128 + x^7 + x^2 + x + 1;
 F = GF(2^128, 'x', modulus=p)
 
-# A comlete example for GCM which allows to construct a single ciphertext + tag
+# A complete example for GCM which allows to construct a single ciphertext + tag
 # which can be decrypted under two different keys.
 #
 
-def gcm(key1, key2, nonce, 
+def gcm(key1, key2, nonce, tag,
+        correction_indices,
         num_ct_blocks, ct_blocks,
         num_ad_blocks, ad_blocks):
     # Derive some of the constants we need to compute the tag.
@@ -64,7 +65,7 @@ def gcm(key1, key2, nonce,
     return ad_blocks, ct_blocks
 
 
-if __name__ == "__main__":
+if __name__ == "__main__" and __file__ == "gcm.sage.py":
     # The following variables can be of any value:
     key1 = unhexlify('01'*16)
     key2 = unhexlify('02'*16)
@@ -88,7 +89,8 @@ if __name__ == "__main__":
     correction_indices = [0, 4]
     assert(len(correction_indices) == 2)
 
-    ad_blocks, ct_blocks = gcm(key1, key2, nonce, 
+    ad_blocks, ct_blocks = gcm(key1, key2, nonce, tag,
+        correction_indices,
         num_ct_blocks, ct_blocks,
         num_ad_blocks, ad_blocks)
 
