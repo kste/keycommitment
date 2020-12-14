@@ -61,7 +61,7 @@ keep += list(range(start, content_length))
 
 assert(len(controlled_m1 + controlled_m2) == content_length)
 
-ciphertext, tag = ocb_(key1, key2, nonce, tag, 
+ciphertext, tag = ocb(key1, key2, nonce, tag, 
     content_length, t, m,
     m1, m2,
     controlled_m1, controlled_m2)
