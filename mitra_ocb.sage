@@ -15,7 +15,7 @@ parser.add_argument('-n', '--nonce', default=unhexlify('03'*12),
     help="nonce - default: 03*.")
 parser.add_argument('-t', '--tag', default=unhexlify('04'*16),
     help="nonce - default: 04*.")
-parser.add_argument('-d', '--dump', default=False, action="store_true",
+parser.add_argument('-p', '--dump_plaintexts', default=False, action="store_true",
     help="Dump decrypted payloads.")
 
 args = parser.parse_args()
@@ -72,7 +72,7 @@ print(f'Nonce: {hexlify(nonce)}')
 print(f'Ciphertext: {hexlify(ciphertext[:32])}')
 print(f'Tag: {hexlify(tag)}')
 
-if args.dump:
+if args.dump_plaintexts:
     cipher1 = AES.new(key1, AES.MODE_OCB, nonce=nonce)
     cipher2 = AES.new(key2, AES.MODE_OCB, nonce=nonce)
     m1 = cipher1.decrypt_and_verify(ciphertext, tag)

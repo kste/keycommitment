@@ -15,7 +15,7 @@ parser.add_argument('-n', '--nonce', default=unhexlify('03'*12),
     help="nonce - default: 03*.")
 parser.add_argument('-t', '--tag', default=unhexlify('04'*16),
     help="nonce - default: 04*.")
-parser.add_argument('-d', '--dump', default=False, action="store_true",
+parser.add_argument('-p', '--dump_plaintexts', default=False, action="store_true",
     help="Dump decrypted payloads.")
 
 args = parser.parse_args()
@@ -85,7 +85,7 @@ print(f'Nonce: {hexlify(nonce)}')
 print(f'Ciphertext: {hexlify(ciphertext[:32])}')
 print(f'Tag: {hexlify(tag)}')
 
-if args.dump:
+if args.dump_plaintexts:
     m1 = AES_GCM_SIV_decrypt(ciphertext, tag, key1, nonce)
     m2 = AES_GCM_SIV_decrypt(ciphertext, tag, key2, nonce)
     with open("siv1.bin", "wb") as f: f.write(m1)
