@@ -2,6 +2,8 @@
 
 import sys
 import argparse
+import binascii
+from Crypto.Util.number import long_to_bytes,bytes_to_long
 
 load('gcm.sage')
 
@@ -24,13 +26,13 @@ def mix(d1, d2, cuts):
 parser = argparse.ArgumentParser(description="Turn a non-overlapping, block-aligned polyglot into a dual AES-GCM ciphertext.")
 parser.add_argument('polyglot',
     help="input polyglot - requires special naming like 'P(10-5c).png.rar'.")
-parser.add_argument('-k', '--keys', nargs=2, default=[unhexlify('01'*16), unhexlify('02'*16)],
+parser.add_argument('-k', '--keys', nargs=2, default=[unhexlify(b'01'*16), unhexlify('02'*16)],
     help="Encryption keys - default: 01*16 / 02*16 .")
-parser.add_argument('-n', '--nonce', default=unhexlify('03'*12),
+parser.add_argument('-n', '--nonce', default=unhexlify(b'03'*12),
     help="Nonce - default: 03*12 .")
 parser.add_argument('-a', '--additional_data', default=unhexlify(b'aa'*32),
     help="Additional Data - default: AA*32 .")
-parser.add_argument('-t', '--tag', default=unhexlify('04'*16),
+parser.add_argument('-t', '--tag', default=unhexlify(b'04'*16),
     help="Tag - default: 04*16 .")
 parser.add_argument('-i', '--index', default=0,
     help="Index of correction blocks.")
@@ -58,6 +60,38 @@ if len(cuts) < 1:
 
 with open(fn, "rb") as f:
     fdata = f.read()
+
+def xor(_a1, _a2):
+    assert len(_a1) == len(_a2)
+    return bytes([(_a1[i] ^^ _a2[i]) for i in range(len(_a1))])
+
+def bruteNonce(fn):
+    hdr1 = fn[fn.find("{")+1:]
+    hdr1 = hdr1[:hdr1.find("}")]
+    hdr1 = binascii.unhexlify(hdr1)
+
+    hdr2 = fdata[:len(hdr1)]
+    hdr_xor = xor(hdr1,hdr2)
+    hdr_xor_l = len(hdr_xor)
+    aes1 = AES.new(key1, AES.MODE_ECB)
+    aes2 = AES.new(key2, AES.MODE_ECB)
+
+    i = 0
+    for i in range(2**64):
+        block1 = aes1.encrypt(long_to_bytes((i << 32) + 2, 16))
+        block2 = aes2.encrypt(long_to_bytes((i << 32) + 2, 16))
+
+        if xor(block1[:hdr_xor_l], block2[:hdr_xor_l]) == hdr_xor:
+            return i
+    return None
+
+
+if fn.startswith("O") and \
+    "{" in fn and \
+    "}" in fn:
+    nonce = bruteNonce(fn)
+    print("Overlap file found - bruteforced nonce: %s" % nonce)
+    nonce = unhexlify(b"%024x" % nonce)
 
 cipher = AES.new(key1, AES.MODE_GCM, nonce=nonce)
 _ = cipher.update(additional_data)
