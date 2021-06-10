@@ -1,4 +1,4 @@
-# AES-OCB3 PoC generator from Mitra-generated polyglot
+# AES-OCB3 PoC generator from a Mitra-generated polyglot
 # Note: requires block alignment
 
 import sys
@@ -9,11 +9,11 @@ load('ocb.sage')
 parser = argparse.ArgumentParser(description="Turn a non-overlapping, block-aligned polyglot into a dual AES-OCB3 ciphertext.")
 parser.add_argument('polyglot',
     help="input polyglot - requires special naming like 'P(10-5c).png.rar'.")
-parser.add_argument('-k', '--keys', nargs=2, default=[unhexlify('01'*16), unhexlify('02'*16)],
+parser.add_argument('-k', '--keys', nargs=2, default=['01'*16, '02'*16],
     help="encryption keys - default: 01* / 02*.")
-parser.add_argument('-n', '--nonce', default=unhexlify('03'*12),
+parser.add_argument('-n', '--nonce', default='03'*12,
     help="nonce - default: 03*.")
-parser.add_argument('-t', '--tag', default=unhexlify('04'*16),
+parser.add_argument('-t', '--tag', default='04'*16,
     help="nonce - default: 04*.")
 parser.add_argument('-p', '--dump_plaintexts', default=False, action="store_true",
     help="Dump decrypted payloads.")
@@ -22,8 +22,10 @@ args = parser.parse_args()
 
 fn = args.polyglot
 key1, key2 = args.keys
-nonce = args.nonce
-tag = args.tag
+key1 = unhexlify(key1)
+key2 = unhexlify(key2)
+nonce = unhexlify(args.nonce)
+tag = unhexlify(args.tag)
 
 cuts = fn[fn.find("(") + 1:]
 cuts = cuts[:cuts.find(")")]
@@ -69,7 +71,7 @@ ciphertext, tag = ocb(key1, key2, nonce, tag,
 print(f'Key1: {hexlify(key1)}')
 print(f'Key2: {hexlify(key2)}')
 print(f'Nonce: {hexlify(nonce)}')
-print(f'Ciphertext: {hexlify(ciphertext[:32])}')
+print(f'Ciphertext: {hexlify(ciphertext)}')
 print(f'Tag: {hexlify(tag)}')
 
 if args.dump_plaintexts:

@@ -1,4 +1,5 @@
 # AES-GCM PoC generator from a Mitra-generated polyglot.
+# Bruteforces the nonce if a near-polyglot is used.
 
 import sys
 import argparse
@@ -26,13 +27,13 @@ def mix(d1, d2, cuts):
 parser = argparse.ArgumentParser(description="Turn a non-overlapping, block-aligned polyglot into a dual AES-GCM ciphertext.")
 parser.add_argument('polyglot',
     help="input polyglot - requires special naming like 'P(10-5c).png.rar'.")
-parser.add_argument('-k', '--keys', nargs=2, default=[unhexlify(b'01'*16), unhexlify('02'*16)],
+parser.add_argument('-k', '--keys', nargs=2, default=['01'*16, '02'*16],
     help="Encryption keys - default: 01*16 / 02*16 .")
-parser.add_argument('-n', '--nonce', default=unhexlify(b'03'*12),
+parser.add_argument('-n', '--nonce', default='03'*12,
     help="Nonce - default: 03*12 .")
-parser.add_argument('-a', '--additional_data', default=unhexlify(b'aa'*32),
+parser.add_argument('-a', '--additional_data', default='aa'*32,
     help="Additional Data - default: AA*32 .")
-parser.add_argument('-t', '--tag', default=unhexlify(b'04'*16),
+parser.add_argument('-t', '--tag', default='04'*16,
     help="Tag - default: 04*16 .")
 parser.add_argument('-i', '--index', default=0,
     help="Index of correction blocks.")
@@ -43,9 +44,11 @@ args = parser.parse_args()
 
 fn = args.polyglot
 key1, key2 = args.keys
-nonce = args.nonce
-additional_data = args.additional_data
-tag = args.tag
+key1 = unhexlify(key1)
+key2 = unhexlify(key2)
+nonce = unhexlify(args.nonce)
+additional_data = unhexlify(args.additional_data)
+tag = unhexlify(args.tag)
 index = int(args.index)
 
 # GCM cuts are at byte boundary
@@ -77,7 +80,7 @@ def bruteNonce(fn):
     aes2 = AES.new(key2, AES.MODE_ECB)
 
     i = 0
-    for i in range(2**64):
+    for i in range(2**(8*hdr_xor_l)):
         block1 = aes1.encrypt(long_to_bytes((i << 32) + 2, 16))
         block2 = aes2.encrypt(long_to_bytes((i << 32) + 2, 16))
 
@@ -134,8 +137,8 @@ ciphertext = b''.join(ct_blocks)
 print(f'Key1: {hexlify(key1)}')
 print(f'Key2: {hexlify(key2)}')
 print(f'Nonce: {hexlify(nonce)}')
-print(f'AdditionalData: {hexlify(additional_data)}')
-print(f'Ciphertext: {hexlify(ciphertext[:32])}')
+print(f'Adata: {hexlify(additional_data)}')
+print(f'Ciphertext: {hexlify(ciphertext)}')
 print(f'Tag: {hexlify(tag)}')
 
 if args.dump_plaintexts:
