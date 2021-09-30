@@ -137,7 +137,7 @@ ciphertext = b''.join(ct_blocks)
 print(f'Key1: {hexlify(key1)}')
 print(f'Key2: {hexlify(key2)}')
 print(f'Nonce: {hexlify(nonce)}')
-print(f'Adata: {hexlify(additional_data)}')
+print(f'AdditionalData: {hexlify(additional_data)}')
 print(f'Ciphertext: {hexlify(ciphertext)}')
 print(f'Tag: {hexlify(tag)}')
 
