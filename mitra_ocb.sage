@@ -39,7 +39,7 @@ if len(cuts) < 1:
 with open(fn, "rb") as f:
     fdata = f.read()
 
-content_length = len(fdata) / 16
+content_length = len(fdata) // 16
 m1 = [fdata[i*16: i*16+16] for i in range(content_length)]
 m2 = [fdata[i*16: i*16+16] for i in range(content_length)]
 
